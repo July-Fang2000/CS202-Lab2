@@ -681,3 +681,33 @@ procdump(void)
     printf("\n");
   }
 }
+
+// Prints out the scheduling statistics for each process
+int
+sched_statistics(void)
+{
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+
+    if(p->state == UNUSED)
+      continue;
+    printf("%d(%s): tickets: %d, ticks: %d\n", p->pid, p->name, p->tickets, p->ticks);
+
+  }
+  return 0;
+}
+
+// Sets the number of tickets for the calling process
+int
+sched_tickets(int number) 
+{
+  if(number < 0 || number >10000)
+    return -1;
+  
+  struct proc *p = myproc();
+
+  p->tickets = number;
+
+  return 0;
+}
