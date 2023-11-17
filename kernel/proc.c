@@ -139,10 +139,6 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-  p->tickets = 100;
-  p->stride = 100;
-  p->pass = 100;
-  p->ticks = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -481,31 +477,27 @@ void scheduler(void) {
             release(&p->lock);
         }
 
-        
+        if(total_tickets > 0) {
             int winning_ticket = rand() % total_tickets;
-
+            int current_ticket = 0;
             for(p = proc; p < &proc[NPROC]; p++) {
                 acquire(&p->lock);
                 if(p->state == RUNNABLE) {
-                    if(p->tickets > winning_ticket) {
+                    current_ticket += p->tickets;
+                    if(current_ticket > winning_ticket) {
                         // Find the winning process and switch to it
                         p->state = RUNNING;
-                        p->ticks += 1;
                         c->proc = p;
                         swtch(&c->context, &p->context);
 
                         // Set the current process of the CPU to NULL
                         c->proc = 0;
-                        release(&p->lock);
                         break;
-                    }else{
-                      winning_ticket -= p->tickets;
-                     }   
+                    }
                 }
                 release(&p->lock);
             }
-            
-        
+        }
     }
 }
 
@@ -577,7 +569,6 @@ scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
-        p->ticks += 1;
         c->proc = p;
         swtch(&c->context, &p->context);
 
@@ -803,20 +794,19 @@ procdump(void)
 }
 
 // Prints out the scheduling statistics for each process
-void
-sched_statistics()
+int
+sched_statistics(void)
 {
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
 
-    if(p->state != UNUSED && p->state != USED){
-    acquire(&p->lock);
+    if(p->state == UNUSED)
+      continue;
     printf("%d(%s): tickets: %d, ticks: %d\n", p->pid, p->name, p->tickets, p->ticks);
-    release(&p->lock);
-    }
 
   }
+  return 0;
 }
 
 // Sets the number of tickets for the calling process
