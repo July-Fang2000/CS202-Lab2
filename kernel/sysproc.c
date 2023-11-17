@@ -93,7 +93,8 @@ sys_uptime(void)
 uint64
 sys_sched_statistics(void) 
 { 
-  return sched_statistics();
+  sched_statistics();
+  return 0;
 }
 
 
