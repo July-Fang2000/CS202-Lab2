@@ -102,5 +102,6 @@ sys_sched_tickets(void)
 {
   int n_tickets;
   argint(0, &n_tickets);
-  return sched_tickets(n_tickets);
+  sched_tickets(n_tickets);
+  return 0;
 }
